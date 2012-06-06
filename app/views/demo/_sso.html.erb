@@ -1,0 +1,23 @@
+<% if @use_sso %>
+  <%= javascript_include_tag "https://capture-staging.janrainsso.com/sso.js" %>
+  <script type="text/javascript">
+  
+  JANRAIN.SSO.CAPTURE.check_login({
+    sso_server: '<%= @sso_server %>',
+    client_id: '<%= @client_id %>',
+    redirect_uri: '<%= @redirect_uri %>?from_sso=1',
+    logout_uri: '<%= @my_logout_uri %>',
+    xd_receiver: '<%= @xdcomm_uri %>'<% if @use_backplane %>,
+    bp_channel: Backplane.getChannelID()
+    <% end %>
+  });
+
+  function sso_logout() {
+    console.log("sign out");
+    JANRAIN.SSO.CAPTURE.logout({
+      sso_server: '<%= @sso_server %>',
+      logout_uri: '<%= @my_logout_uri %>'
+    });
+  };
+  </script>
+<% end %>

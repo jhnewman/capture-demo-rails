@@ -1,0 +1,18 @@
+<%
+provide(:title, "Edit Profile")
+provide(:name, "edit_profile")
+%>
+
+<script type='text/javascript'>
+  var CAPTURE = {};
+  CAPTURE.profileEditCallback = function() {
+    // if you ARE syncing data, then you need to call the profile_sync function:
+    //window.location.href = 'profile_edit_finished.php';
+    
+    // if NOT syncing data from Capture to your user table, you can just refresh the page:
+    window.location = "/demo/profile";
+  };
+</script>
+
+<%= render "iframe", :iframe_src => @edit_profile_uri %>
+

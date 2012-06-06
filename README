@@ -1,0 +1,5 @@
+
+A translation of the janrain demo site into a rails app.
+
+Move example_config.yml to config.yml and modify the values to your configuration before starting the rails server.
+

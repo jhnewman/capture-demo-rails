@@ -1,0 +1,7 @@
+my_addr:        http://example.com
+capture_addr:   apid.com
+captureui_addr: captureui.com
+app_id:         <your apid app_id>
+client_id:      <apid client_id>
+client_secret:  <apid client_secret>
+sso_server:     http://sso.com

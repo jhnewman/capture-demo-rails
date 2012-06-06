@@ -1,0 +1,29 @@
+    <% if @use_backplane %>
+    <%= javascript_include_tag "http://backplane1.janrainbackplane.com/backplane.js" %>
+    <%= javascript_include_tag "http://backplane1.janrainbackplane.com/identity-services.js" %> 
+
+    <script type="text/javascript">
+      Backplane(bp_done);
+
+      Backplane.init({
+        serverBaseURL: "<%= @serverBaseURL %>",
+        busName: "<%= @busName %>",
+        initFrameFilter: Backplane.identityServices.init
+      });
+    
+      function bp_done() {
+        $(document).ready(function() {
+          bp_channel = Backplane.getChannelID();
+          console.log("bp_channel=" + bp_channel)
+          $(".signin_link").each(function() {
+            this.href = this.href + "&bp_channel=" + encodeURIComponent(bp_channel);
+          });
+        });
+     
+        id = Backplane.subscribe(function(backplaneMessage) {
+          alert("backplane message received:"+ JSON.stringify(backplaneMessage));
+        });
+        console.log("id: " + id);
+      }
+    </script>
+    <% end %>

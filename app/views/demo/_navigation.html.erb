@@ -1,0 +1,64 @@
+<script type="text/javascript">
+  jQuery(document).ready(function($) {
+
+    $('.iframe').fancybox( {
+      padding: 0,
+      scrolling: 'no',
+      autoScale: true,
+      autoDimensions: false,
+      type: 'iframe'
+    } );
+
+    $('#logout').click(sso_logout);
+   
+  });
+    // 
+  CAPTURE.resize = function(jargs)
+  {
+    var args = JSON.parse(jargs);
+    jQuery("#fancybox-content").css({
+      "height": args.h + "px",
+      "width": args.w + "px"
+    });
+    jQuery.fancybox.resize()
+    jQuery.fancybox.center()
+  } 
+
+  CAPTURE.recoverPasswordCallback = function()
+  {
+    $.fancybox.close();
+    $('#message').show();
+    $('#message').text("We've sent an email with instructions for creating a new password. Your existing password has not been changed.");
+  }
+
+</script>
+
+<div id="navigation">
+
+<% if yield(:name) != "home" %>
+  <%= link_to "Home", "/demo/home" , :id => "home" %> 
+<% end %>
+
+<% if signed_in? %>
+  Hello, <%= user_entity["displayName"] %>! | 
+<% end %>
+
+<% if signed_in? %>
+  <% if yield(:name) != "profile" %>
+    <%= link_to "View Profile", "/demo/profile" %> |
+  <% end %>
+  <% if yield(:name) != "edit_profile" %>
+    <%= link_to "Edit Profile", "/demo/edit_profile" %> |
+  <% end %>
+  <% if @use_sso %>
+  <% # if using sso, make sure not to link to actual logout page, sso should 
+     # redirect the user there after logging out of visited federated sites. %>
+    <%= link_to "Sign Out", "#", :id => "logout" %>
+  <% else %>
+    <%= link_to "Sign Out", "/demo/logout" %>
+  <% end %>
+<% else %>
+  <%= link_to "Sign In", @signin_uri , :class => "iframe signin_link" %>
+<% end %>
+
+</div>
