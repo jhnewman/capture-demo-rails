@@ -8,12 +8,19 @@ module Settings
     settings["use_ssl"] ? "https" : "http"
   end 
 
-  def settings
-    @settings ||= verify(defaults.merge(YAML.load_file("config.yml")))
+  def settings 
+    @settings ||= verify(defaults.merge(load_config("config.yml")))
   end
 
   private
- 
+
+  def load_config(filename)
+    if !File.exists?(filename)
+      raise "Capture Demo configuration file \'#{filename}\' does not exist. Example can be found in \'example_#{filename}'."
+    end
+    YAML.load_file(filename)
+  end 
+
   def defaults 
     {
       "backplane_settings" => { },

@@ -1,5 +1,61 @@
 
-A translation of the janrain demo site into a rails app.
+Description
+===========
 
-Move example_config.yml to config.yml and modify the values to your configuration before starting the rails server.
+A port of the janrain capture demo site from php into a ruby on rails app.
+
+Installation and Setup
+======================
+
+* Clone.
+
+* Move example_config.yml to config.yml and modify the values to your configuration.
+
+* Start rails server.
+
+Documentation
+=============
+
+DemoController
+--------------
+
+Controller for the following user viewable actions:
+
+* demo/home
+* demo/profile
+* demo/edit_profile
+  
+
+and back-end actions
+
+* demo/authCallback
+  Handles authentication callback from capture
+* demo/logout
+  Signs out of site, mostly for callbacks from sso sites.
+* demo/xdcomm
+  For cross domain scripts.
+
+DemoController also populates variables used by partials
+
+* _navigation.html.erb
+  Renders welcome message and links to site pages.
+* _backplane.html.erb
+  Includes and configures backplane.
+* _sso.html.erb
+  Includes and configures SSO.
+
+Layouts and Views
+-----------------
+
+Each publicly accesible page(home, profile, edit_profile) has a view.
+
+These views are rendered within a single layout, demo_layout, which also renders the navigation bar, sso and backplane partials.
+
+Helpers
+-------
+
+* SessionHelper
+  Tracks signin state using the session hash, and exposes the capture api, specifically settings/items and entity
+* Settings
+  Loads configuration from config.yml in rails root.
 

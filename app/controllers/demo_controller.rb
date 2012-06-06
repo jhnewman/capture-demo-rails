@@ -13,8 +13,15 @@ class DemoController < ApplicationController
   before_filter :backplane
   before_filter :global_uris
   before_filter :sso
+  before_filter :nav
 
   private
+
+  def nav
+    if signed_in?
+      @username = user_entity["displayName"]
+    end
+  end
 
   # initializes data used in _sso.html.erb
   def sso

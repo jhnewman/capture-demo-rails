@@ -40,10 +40,8 @@
 <% end %>
 
 <% if signed_in? %>
-  Hello, <%= user_entity["displayName"] %>! | 
-<% end %>
-
-<% if signed_in? %>
+  <% # this call to user entity is costly, as it queries apid %>
+  Hello, <%= @username %>! | 
   <% if yield(:name) != "profile" %>
     <%= link_to "View Profile", "/demo/profile" %> |
   <% end %>

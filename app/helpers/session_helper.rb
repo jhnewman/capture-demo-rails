@@ -33,6 +33,33 @@ module SessionHelper
     session.delete(:capture_session)
   end
 
+  def capture_settings
+    @capture_settings ||= capture.items()["result"]
+  end
+
+  # user_entity is currently the only place that uses the access_token,
+  # besides (view|edit)_profile_uri, this is why we handle token refresh here
+  # even though it seems sort of arbitrary and would go somewhere more general 
+  # in a real site, for instance, in a before_filter.
+  def user_entity
+    require_signin
+    begin
+      @user_entity ||= capture.entity_with_access( access_token )["result"]
+      return @user_entity
+    rescue CaptureTools::Errors::AccessTokenExpiredError      
+      # refresh the token
+      refresh_token()
+      # and try again
+      return user_entity
+    end
+  end
+
+  def signed_in?
+    session.key?(:capture_session)
+  end
+
+  private
+
   # a capture apid abstraction defined in capture_tools
   def capture
     @capture ||= CaptureTools::Api.new({
@@ -43,33 +70,13 @@ module SessionHelper
     })
   end
 
-  def capture_settings
-    @capture_settings ||= capture.items()["result"]
-  end
 
-  # user_entity is currently the only place that uses the access_token,
-  # besides (view|edit)_profile_uri, this is why we handle token refresh here
-  # even though it seems sort of arbitrary and would go somewhere more general 
-  # in a real site, for instance, in a before_filter.
-  def user_entity
-    if signed_in?
-      begin
-        @user_entity ||= capture.entity_with_access( access_token )["result"]
-        return @user_entity
-      rescue CaptureTools::Errors::AccessTokenExpiredError      
-        # refresh the token
-        refresh_token()
-        # and try again
-        return user_entity
-      end
+
+  def require_signin
+    if !signed_in?
+      raise "Must sign in to perform this query to capture."
     end
   end
-
-  def signed_in?
-    session.key?(:capture_session)
-  end
-
-  private
 
   def access_token
     capture_session["access_token"]
