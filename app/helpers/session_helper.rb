@@ -64,7 +64,7 @@ module SessionHelper
   def capture
     @capture ||= CaptureTools::Api.new({
       #:base_url => settings.fetch("capture_addr"), 
-      :base_url => settings.fetch("captureui_addr"), # both should be the same in most cases.
+      :base_url => "https://" + settings.fetch("captureui_addr"), # both should be the same in most cases.
       :client_id => settings.fetch("client_id"),
       :client_secret => settings.fetch("client_secret"),
       :app_id => settings.fetch("app_id")

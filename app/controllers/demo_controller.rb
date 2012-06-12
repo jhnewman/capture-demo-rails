@@ -129,7 +129,7 @@ class DemoController < ApplicationController
 
   # constructs the uri of a capture_screen from params
   def construct_uri(params = {})
-    uri = URI(settings.fetch("captureui_addr"))
+    uri = URI("https://" + settings.fetch("captureui_addr"))
     uri.path = "/oauth/#{action}"
     uri.query = URI.encode_www_form(params)
     uri.to_s

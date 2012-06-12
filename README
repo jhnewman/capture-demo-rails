@@ -4,35 +4,44 @@ Description
 
 A port of the janrain capture demo site from php into a ruby on rails app.
 
+The most recent version allows viewing all screens for multiple capture apps.
+
+These can be selected from dropdown menus in the navigation bar, or accessed by the url '<site>/<app name>/<screen name>'
+
+For example 'http://mysite.com/fox/public_profile'
+
 Installation and Setup
 ======================
 
 * Clone.
 
-* Move example_config.yml to config.yml and modify the values to your configuration.
+* Run the exporter.rb rails runner script to generate 'config.yml' and place in rails root directory.
 
 * Start rails server.
 
 Documentation
 =============
 
+exporter.rb
+-----------
+
+A rails runner script that exports configuration data from a CaptureUI server.
+Execute the following command in the rails root directory of a CaptureUI server.
+
+rails runner <path-to-exporter> [<output-file>]
+
+The default <output-file> is 'config.yml'
+
 DemoController
 --------------
 
-Controller for the following user viewable actions:
+Controller for capture application screens, such as 'fox/signin', and back-end actions
 
-* demo/home
-* demo/profile
-* demo/edit_profile
-  
-
-and back-end actions
-
-* demo/authCallback
+* <app name>/authCallback
   Handles authentication callback from capture
-* demo/logout
+* <app name>/logout
   Signs out of site, mostly for callbacks from sso sites.
-* demo/xdcomm
+* <app name>/xdcomm
   For cross domain scripts.
 
 DemoController also populates variables used by partials
@@ -47,15 +56,14 @@ DemoController also populates variables used by partials
 Layouts and Views
 -----------------
 
-Each publicly accesible page(home, profile, edit_profile) has a view.
-
-These views are rendered within a single layout, demo_layout, which also renders the navigation bar, sso and backplane partials.
+Views are rendered within a single layout, demo_layout, which also renders the navigation bar, sso and backplane partials.
 
 Helpers
 -------
 
 * SessionHelper
-  Tracks signin state using the session hash, and exposes the capture api, specifically settings/items and entity
+  Tracks signin state using the session hash, and exposes the capture api, specifically settings/items and entity.
+  SessionHelper can maintain sessions for multiple capture applications.
 * Settings
   Loads configuration from config.yml in rails root.
 
