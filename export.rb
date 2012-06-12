@@ -24,7 +24,7 @@ goodie_bag = {}
 CaptureApp.all_apps.map {|app|
   if name2mod.key? app.name.normalize
     capture_ui = "#{app.domain}:#{app.port}"
-    capture = URI(app.server).domain == 'localhost' ? capture_ui : app.server
+    capture = URI(app.server).host == 'localhost' ? capture_ui : app.server
 
     goodie_bag[app.name.normalize] = {
       "client_id" => app.client_id,

@@ -52,6 +52,5 @@ module Settings
       end
     }
     return x 
-  end
- 
+  end 
 end

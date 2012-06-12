@@ -24,7 +24,6 @@ class DemoController < ApplicationController
 
 #  before_filter :require_login, :only => [:profile, :edit_profile, :foo, :bar, :change_password]
 #  before_filter :backplane
-#  before_filter :global_uris
 #  before_filter :sso
 
   before_filter :nav, :except => [:list_apps, :view_session, :view_settings, :view_user_entity]
@@ -87,30 +86,6 @@ class DemoController < ApplicationController
     @things
   end
  
-  # these uris are used in multiple views and actions.
-  def global_uris
-    #uri = URI(my_addr) #URI(settings["my_addr"]) #URI(["http://", @@my_addr].join())
-    #uri.path = "/#{name}/authCallback"
-    #@redirect_uri = uri.to_s
-
-    #@xdcomm_uri = settings["my_addr"] + "/#{name}/xdcomm.html" 
-
-    #uri = URI("#{settings.fetch("captureui_addr")}")
-    #uri.path = "/oauth/signin"
-    #uri.query = URI.encode_www_form({
-    #  "client_id" => settings.fetch("client_id"),
-    #  "response_type" => "code",
-    #  "redirect_uri" => @redirect_uri,
-    #  "xd_receiver" => @xdcomm_uri,
-    #  "recover_password_callback" => "CAPTURE.recoverPasswordCallback"
-    #})
-    #@signin_uri = uri.to_s
-
-    #@my_logout_uri = settings.fetch("my_addr") + "/#{name}/logout"
-  end
-
-  protected 
-
   def name
     @name ||= params[:name]
   end
@@ -165,8 +140,6 @@ class DemoController < ApplicationController
   def view_user_entity
     render :json => user_entity
   end
-i
-
  
   def logout
     sign_out
@@ -266,8 +239,6 @@ i
 #   recover_password_callback=CAPTURE.recoverPasswordCallback
   def recover_password
     embed_screen ["redirect_uri", "client_id"], "response_type" => "code"
-
-    #"redirect_uri" => @redirect_uri, "client_id" => settings["client_id"], "response_type" => "code"
   end
 
   def js_token_url_1
