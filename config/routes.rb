@@ -1,4 +1,9 @@
 Oauthtest::Application.routes.draw do
+
+  match "/:action", :controller => "demo"
+  match "/:name/:action", :controller => "demo"
+
+
   get "demo/profile"
 
   get "demo/login"

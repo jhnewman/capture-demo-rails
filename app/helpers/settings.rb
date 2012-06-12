@@ -8,8 +8,23 @@ module Settings
     settings["use_ssl"] ? "https" : "http"
   end 
 
-  def settings 
-    @settings ||= verify(defaults.merge(load_config("config.yml")))
+  def apps
+    @apps ||= config.keys 
+  end
+
+  def app_configs 
+    @config ||= load_config("config.yml")
+  end
+
+  def settings
+    return @settings unless @settings.blank?
+
+    begin 
+      @settings = verify(defaults.merge(app_configs.fetch( params[:name] )))
+    rescue KeyError
+      raise "There is no configuration for and app named \'#{params[:name]}\'."
+    end
+    @settings
   end
 
   private
@@ -23,13 +38,14 @@ module Settings
 
   def defaults 
     {
+      "my_addr" => "http://catfacts.dnsdynamic.com:8001",
       "backplane_settings" => { },
       "use_ssl" => true
     }
   end
  
   def verify(x)
-    required = ["my_addr", "capture_addr", "captureui_addr", "app_id", "client_id", "client_secret", "sso_server", "backplane_settings", "use_ssl"]
+    required = ["my_addr", "capture_addr", "captureui_addr", "app_id", "client_id", "client_secret", "backplane_settings", "use_ssl"]
     required.each{|field| 
       if !x.key?(field)
         raise "field \'#{field}\' not found in configuration. Did you set in?"

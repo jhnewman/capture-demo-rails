@@ -14,7 +14,7 @@ module SessionHelper
       :redirect_uri => redirect_uri
     })
 
-    session[:capture_session] = res
+    capture_sessions[params[:name]] = res
 
     # return true if this is a password recover flow, false otherwise
     begin
@@ -30,7 +30,7 @@ module SessionHelper
   # exception
 
   def sign_out
-    session.delete(:capture_session)
+    capture_sessions.delete(params[:name])
   end
 
   def capture_settings
@@ -55,7 +55,7 @@ module SessionHelper
   end
 
   def signed_in?
-    session.key?(:capture_session)
+    capture_sessions.key?(params[:name])
   end
 
   private
@@ -63,10 +63,11 @@ module SessionHelper
   # a capture apid abstraction defined in capture_tools
   def capture
     @capture ||= CaptureTools::Api.new({
-      :base_url => "#{scheme}://#{settings["capture_addr"]}", 
-      :client_id => settings["client_id"],
-      :client_secret => settings["client_secret"],
-      :app_id => settings["app_id"]
+      #:base_url => settings.fetch("capture_addr"), 
+      :base_url => settings.fetch("captureui_addr"), # both should be the same in most cases.
+      :client_id => settings.fetch("client_id"),
+      :client_secret => settings.fetch("client_secret"),
+      :app_id => settings.fetch("app_id")
     })
   end
 
@@ -74,20 +75,25 @@ module SessionHelper
 
   def require_signin
     if !signed_in?
-      raise "Must sign in to perform this query to capture."
+      raise "Must sign in to do this."
     end
   end
 
   def access_token
-    capture_session["access_token"]
+    require_signin
+    capture_session.fetch("access_token")
+  end
+
+  def capture_sessions
+    session[:capture_sessions] ||= {}
   end
 
   def capture_session
-    session[:capture_session]
+    capture_sessions[params[:name]]
   end
 
   def refresh_token
-    session[:capture_session] = capture.refresh_token({
+    capture_sessions[params[:name]] = capture.refresh_token({
       :refresh_token => capture_session["refresh_token"]
     })
   end

@@ -9,8 +9,20 @@
       type: 'iframe'
     } );
 
+<% if @use_sso %>
     $('#logout').click(sso_logout);
-   
+<% end %>
+
+    $('select#screens').change(function() {
+      var screen = $('option:selected', this).attr('value');
+      location = '<%= "#{@my_addr}/#{@name}/" %>' + screen
+    });
+
+    $('select#apps').change(function() {
+      var app = $('option:selected', this).attr('value');
+      location = '<%= "#{@my_addr}/" %>' + app + '/<%= params[:action] %>'
+    });
+
   });
     // 
   CAPTURE.resize = function(jargs)
@@ -36,27 +48,37 @@
 <div id="navigation">
 
 <% if yield(:name) != "home" %>
-  <%= link_to "Home", "/demo/home" , :id => "home" %> 
+  <%= link_to "Home", "/#{@name}/home" , :id => "home" %> 
 <% end %>
 
 <% if signed_in? %>
-  <% # this call to user entity is costly, as it queries apid %>
-  Hello, <%= @username %>! | 
-  <% if yield(:name) != "profile" %>
-    <%= link_to "View Profile", "/demo/profile" %> |
-  <% end %>
-  <% if yield(:name) != "edit_profile" %>
-    <%= link_to "Edit Profile", "/demo/edit_profile" %> |
-  <% end %>
-  <% if @use_sso %>
-  <% # if using sso, make sure not to link to actual logout page, sso should 
-     # redirect the user there after logging out of visited federated sites. %>
-    <%= link_to "Sign Out", "#", :id => "logout" %>
-  <% else %>
-    <%= link_to "Sign Out", "/demo/logout" %>
-  <% end %>
+  Hello, <%= @username %>! |
+<% end %>
+
+
+<label for='apps'>App:<label>
+<select id='apps'>
+  <% @apps.each do |app| %>
+  <option <% if @name == app %> selected='yes' <% end %> value='<%= app %>'>
+    <%= app %>
+  </option>
+<% end %>
+</select> |
+
+<label for='screens'>Screen:<label>
+<select id='screens'>
+  <option value='home'>&lt;select a screen&gt;</option>
+<% @screens.each do |screen| %>
+  <option <% if params[:action] == screen %> selected='yes' <% end %> value='<%= screen %>'>
+    <%= screen %>
+  </option>
+<% end %>
+</select> |
+
+<% if signed_in? %>
+  <%= link_to "Sign Out", "/#{@name}/logout" %>
 <% else %>
-  <%= link_to "Sign In", @signin_uri , :class => "iframe signin_link" %>
+  <%= link_to "Sign In", "/#{@name}/signin" %>
 <% end %>
 
 </div>
