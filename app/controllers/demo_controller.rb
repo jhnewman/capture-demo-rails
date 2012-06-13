@@ -5,8 +5,18 @@ require 'yaml'
 require 'capture_tools'
 
 class Hash
-  def select_keys(keys)
+  def select_keys(*keys)
     self.select {|key, val| keys.include? key }
+  end
+end
+
+# http://blog.moertel.com/articles/2006/04/07/composing-functions-in-ruby
+class Proc
+  def self.compose(f, g)
+    lambda { |*args| f[g[*args]] }
+  end
+  def *(g)
+    Proc.compose(self, g)
   end
 end
 
@@ -18,11 +28,18 @@ class DemoController < ApplicationController
 
   layout "demo"
 
-  before_filter :name
-  before_filter :action
+  @@debug = true
+
+  before_filter :screen_name
+
+  def screen_name 
+    @screen_name ||= params[:screen_name]
+  end
+
   before_filter :my_addr
 
 #  before_filter :require_login, :only => [:profile, :edit_profile, :foo, :bar, :change_password]
+
 #  before_filter :backplane
 #  before_filter :sso
 
@@ -32,7 +49,8 @@ class DemoController < ApplicationController
 
   def nav
     @apps = app_configs.keys
-    @screens = settings["screens"]
+    @signin_uri = screen_uri(api_args.select_keys("client_id", "redirect_uri", "response_type"), "signin")
+    @debug = @@debug
     if signed_in?
       @username = user_entity.fetch("displayName")
     end
@@ -40,18 +58,18 @@ class DemoController < ApplicationController
 
   # initializes data used in _sso.html.erb
   def sso
-    @client_id = settings["client_id"]
-    @sso_server = settings["sso_server"]
+    #@client_id = settings["client_id"]
+    #@sso_server = settings["sso_server"]
     @use_sso = @sso_server != nil
   end
 
   # initializes data used in _backplane.html.erb
   def backplane
-    @use_backplane = capture_settings.key?("backplane_server") && capture_settings.key?("backplane_bus") && capture_settings.key?("backplane_version")
+    @use_backplane = app.backplane_server && app.backplane_bus && app.backplane_version
     
-    @serverBaseURL = "https://#{capture_settings["backplane_server"]}/#{capture_settings["backplane_version"]}/"
+    @serverBaseURL = "https://#{app.backplane_server}/#{app.backplane_version}/"
 
-    @busName = capture_settings["backplane_bus"] 
+    @busName = app.backplane_bus
   end
 
   def require_login
@@ -67,53 +85,54 @@ class DemoController < ApplicationController
      @my_addr ||= "#{request.protocol}#{request.host}:#{request.port}" 
   end
 
-  # things, for lack of a better name, are parameters that can be used
+  # api_args, are args that can be used
   # to construct queries in screen uris
-  def things
-    return @things unless @things.blank?
+  def api_args
+    return @api_args unless @api_args.blank?
     
-    @things = settings.select_keys ["client_id", "client_secret"]
+    @api_args = settings.select_keys("client_id", "client_secret")
+
+    @api_args["response_type"] = "code"
 
     uri = URI(my_addr)
-    uri.path = "/#{name}/authCallback" 
-    @things["redirect_uri"] = uri.to_s
+    uri.path = "/#{app.name}/authCallback" 
+    @api_args["redirect_uri"] = uri.to_s
 
     
-    @things["token"] = access_token if signed_in?
+    @api_args["token"] = access_token if signed_in?
 
-    @things["id"] = user_entity["id"].to_s if signed_in?
+    @api_args["id"] = user_entity["id"].to_s if signed_in?
 
-    @things
-  end
- 
-  def name
-    @name ||= params[:name]
-  end
-
-
-  def action
-    @action ||= params[:action]
+    return @api_args
   end
 
   # constructs a uri for a capture screen with the necesary params and embeds 
   # it in an iframe in the page. 
-  def embed_screen(keys = [], other_params = {})
-    @iframe_src = construct_uri(things.select_keys(keys).merge(other_params))
+  def embed_screen(params = {})
+    @iframe_src = screen_uri(params)
     render "iframe"
   end
 
   # constructs the uri of a capture_screen from params
-  def construct_uri(params = {})
-    uri = URI("https://" + settings.fetch("captureui_addr"))
-    uri.path = "/oauth/#{action}"
+  def screen_uri(params = {}, sn = screen_name)
+    uri = URI("https://" + app.captureui_addr)
+    uri.path = "/oauth/#{sn}"
     uri.query = URI.encode_www_form(params)
     uri.to_s
   end
 
   public
 
-  def view_redirect_uri
-    render :text => things["redirect_uri"]
+#  def client_id
+#    render :text => api_args["client_id"]
+#  end
+
+  def view_api_args
+    render :json => api_args
+  end
+
+  def redirect_uri
+    render :text => api_args["redirect_uri"]
   end
 
   def index 
@@ -134,25 +153,23 @@ class DemoController < ApplicationController
   end
 
   def view_settings
-    render :json => settings
+    render :json => app.settings
   end
 
   def view_user_entity
     render :json => user_entity
-  end
- 
+  end  
+
+  # not capture screens, but used for this app.
+
   def logout
     sign_out
-    redirect_to "/demo/home"
+    redirect_to "#{my_addr}/#{app.name}/home"
   end
 
-  # this is for signing out
-  def logout
-    sign_out
-    #render :text => ""
-    redirect_to "#{my_addr}/#{name}/home"
+  def home
+    render :home, :layout => true
   end
-
 
   # required as described in documentation
   def xdcomm
@@ -170,10 +187,10 @@ class DemoController < ApplicationController
     from_sso = params.fetch("from_sso", "0") == "1" 
     origin = params["origin"]
     
-    redirect_uri_sso = URI(things["redirect_uri"])
+    redirect_uri_sso = URI(api_args["redirect_uri"])
     redirect_uri_sso.query = URI.encode_www_form(params.select{|k, v| ["from_sso", "origin"].include? k})
 
-    redirect_uri = from_sso ? redirect_uri_sso.to_s : things["redirect_uri"]
+    redirect_uri = from_sso ? redirect_uri_sso.to_s : api_args["redirect_uri"]
 
     password_reset = sign_in(auth_code, redirect_uri)
 
@@ -183,83 +200,84 @@ class DemoController < ApplicationController
       redirect_to origin
     elsif password_reset
       # we got here from email password reset, redirect to change password
-      redirect_to "/#{name}/profile_change_password"
+      redirect_to "/#{app.name}/profile_change_password"
     else
-      redirect_to "/#{name}/home"
+      # since we are in an iframe, reload the parent, not the current window,
+      # otherwise we will get nesting.
+      render :text => "<script>window.parent.location.reload()</script>"
     end 
   end 
+  
+  # dispatcher is the action that get called for /:app/:screen routes.
+  # Turns screen into an action, and calls it. If it can't find an action
+  # it will remove suffixes until it can, or until it decides to call 
+  # a generic handler.
+  # 
+  #im so meta
+  def dispatcher
+    screen = screen_name
+    # continuosly remove tokens seperated by '_', starting from the end
+    # until there are no more tokens, or we find one that we respond to
+    begin
+      if self.respond_to?(screen.to_sym) 
+        self.method(screen).call
+        return
+      end
+      tokens = screen.split("_")
+      screen = tokens.take(tokens.length - 1).join("_")
+    end while screen != ""
+    generic_screen
+  end
+
+  def generic_screen
+    #render :text => "unknown screen", :layout => true
+    embed_screen
+  end
 
   # these are shils for capture screens. they embed capture screens within an
   # iframe in the page.
-  def legacy_register_mobile
-    legacy_register
-  end
-
-  def post_login_confirmation_test
-    embed_screen
-  end
-
-  def post_login_confirmation
-    embed_screen
-  end
-
   def signin
-    embed_screen ["redirect_uri", "client_id"] , "response_type" => "code"
-  end
-
-  def signin_mobile
-    signin
+    embed_screen api_args.select_keys("redirect_uri", "client_id", "response_type")
   end
 
   def public_profile
-    embed_screen ["id"] 
+    embed_screen api_args.select_keys("id") 
   end
  
-  def finish_third_party
-    embed_screen ["redirect_uri", "client_id", "token"], "response_type" => "code"
-  end
-
-  def add_signin
-    embed_screen ["redirect_uri"]
-  end
+#  def finish_third_party
+#    embed_screen api_args.select_keys("redirect_uri", "client_id", "token", "response_type")
+#  end
 
   def profile_change_password
-    embed_screen ["token"]
+    embed_screen api_args.select_keys("token")
   end
 
-
-
-# example request
-#
-# http://catfacts.dnsdynamic.com:5422/oauth/signin?
-#   client_id=<something>&
-#   response_type=code&
-#   redirect_uri=http://catfacts.dnsdynamic.com:8001/demo/authCallback&
-#   xd_receiver=http://catfacts.dnsdynamic.com:8001/demo/xdcomm.html&
-#   recover_password_callback=CAPTURE.recoverPasswordCallback
   def recover_password
-    embed_screen ["redirect_uri", "client_id"], "response_type" => "code"
+    embed_screen api_args.select_keys("redirect_uri", "client_id", "response_type")
   end
-
-  def js_token_url_1
-    embed_screen ["client_id", "redirect_uri"], {"response_type" => "code", "flags" => "stay_in_window", "new_widget" => "true"}
-  end
-
-  def account_exists
-    embed_screen "redirect_uri" => @redirect_uri
-  end
-
-# legacy_register?
-#   client_id=<something>
-#   flags=stay_in_window
-#   redirect_uri=http%3A%2F%2Fcatfacts.dnsdynamic.com%3A8002%2Fdemo%2FauthCallback&response_type=code
 
   def legacy_register
-    embed_screen ["redirect_uri", "client_id"], {"response_type" => "code", "flags" => "stay_in_window"}
+    embed_screen api_args.select_keys("redirect_uri", "client_id", "response_type").merge("flags" => "stay_in_window")
   end
 
   def profile
-    embed_screen ["token"]
+    embed_screen api_args.select_keys("token")
   end
 
+  # unviewable screens
+  def add_signin
+    render :unviewable
+  end
+  def account_exists
+    render :unviewable
+  end
+  def token_url_2
+    render :unviewable
+  end
+  def finish_third_party
+    render :unviewable
+  end
+
+ 
 end
+

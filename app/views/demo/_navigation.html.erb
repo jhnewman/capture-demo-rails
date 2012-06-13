@@ -15,16 +15,16 @@
 
     $('select#screens').change(function() {
       var screen = $('option:selected', this).attr('value');
-      location = '<%= "#{@my_addr}/#{@name}/" %>' + screen
+      location = '<%= "#{@my_addr}/#{ app.name }/" %>' + screen
     });
 
     $('select#apps').change(function() {
       var app = $('option:selected', this).attr('value');
-      location = '<%= "#{@my_addr}/" %>' + app + '/<%= params[:action] %>'
+      location = '<%= "#{@my_addr}/" %>' + app + '/<%= @screen %>'
     });
 
   });
-    // 
+  
   CAPTURE.resize = function(jargs)
   {
     var args = JSON.parse(jargs);
@@ -47,20 +47,21 @@
 
 <div id="navigation">
 
-<% if yield(:name) != "home" %>
-  <%= link_to "Home", "/#{@name}/home" , :id => "home" %> 
+<% if @screen != "home" %>
+  <%= link_to "Home", "/#{app.name}/home" , :id => "home" %> 
 <% end %>
 
 <% if signed_in? %>
   Hello, <%= @username %>! |
 <% end %>
 
+<% if @debug %>
 
 <label for='apps'>App:<label>
 <select id='apps'>
-  <% @apps.each do |app| %>
-  <option <% if @name == app %> selected='yes' <% end %> value='<%= app %>'>
-    <%= app %>
+  <% @apps.each do |x| %>
+  <option <% if app.name == x %> selected='yes' <% end %> value='<%= x %>'>
+    <%= x %>
   </option>
 <% end %>
 </select> |
@@ -68,17 +69,36 @@
 <label for='screens'>Screen:<label>
 <select id='screens'>
   <option value='home'>&lt;select a screen&gt;</option>
-<% @screens.each do |screen| %>
-  <option <% if params[:action] == screen %> selected='yes' <% end %> value='<%= screen %>'>
+<% app.screens.each do |screen| %>
+  <option <% if screen == @screen_name %> selected='yes' <% end %> value='<%= screen %>'>
     <%= screen %>
   </option>
 <% end %>
 </select> |
 
-<% if signed_in? %>
-  <%= link_to "Sign Out", "/#{@name}/logout" %>
 <% else %>
-  <%= link_to "Sign In", "/#{@name}/signin" %>
+  <% if signed_in? %>
+    <% if @screen != "public_profile" %>
+      <%= link_to "Public Profile", "/#{app.name}/public_profile" %> |
+    <% end %>
+    <% if @screen != "profile" %>
+      <%= link_to "Edit Profile", "/#{app.name}/profile" %> |
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if signed_in? %>
+  <% if @use_sso %>
+    <%= link_to "Sign Out", "#" %> 
+  <% else %>
+    <%= link_to "Sign Out", "/#{app.name}/logout" %>
+  <% end %>
+<% else %>
+  <% if @debug %>
+    <%= link_to "Sign In", "/#{app.name}/signin" %>
+  <% else %>
+    <%= link_to "Sign In", @signin_uri, :class => "iframe signin_link" %>
+  <% end %>
 <% end %>
 
 </div>

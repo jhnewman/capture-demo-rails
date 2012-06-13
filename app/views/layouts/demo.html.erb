@@ -1,12 +1,12 @@
 <html>
   <head>
-    <title> <%= "#{@name}/#{@action}" %> </title>
+    <title> <%= "#{@app}/#{@screen}" %> </title>
     <%= stylesheet_link_tag "demo" %>
     <%= stylesheet_link_tag "/fancybox/jquery.fancybox-1.3.3.css" %>
 
     <%= javascript_include_tag "http://ajax.googleapis.com/ajax/libs/jquery/1.4/jquery.min.js" %>
     <%= javascript_include_tag "/fancybox/jquery.fancybox-1.3.3.pack.js" %>
-    <%= javascript_include_tag "http://#{settings["captureui_addr"]}/cdn/javascripts/capture_client.js" %>
+    <% #javascript_include_tag "http://#{settings["captureui_addr"]}/cdn/javascripts/capture_client.js" %>
 
     <%= render "backplane" %>
      

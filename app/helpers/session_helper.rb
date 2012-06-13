@@ -9,12 +9,12 @@ module SessionHelper
   def sign_in(auth_code, redirect_uri)
     # exchange authorization code for access token json result, and store 
     # in session. This session key is how we track users login state.
-    res = capture.code_for_token({
+    res = app.api.code_for_token({
       :code => auth_code,
       :redirect_uri => redirect_uri
     })
 
-    capture_sessions[params[:name]] = res
+    capture_sessions[app.name] = res
 
     # return true if this is a password recover flow, false otherwise
     begin
@@ -30,11 +30,7 @@ module SessionHelper
   # exception
 
   def sign_out
-    capture_sessions.delete(params[:name])
-  end
-
-  def capture_settings
-    @capture_settings ||= capture.items()["result"]
+    capture_sessions.delete(app.name)
   end
 
   # user_entity is currently the only place that uses the access_token,
@@ -44,7 +40,7 @@ module SessionHelper
   def user_entity
     require_signin
     begin
-      @user_entity ||= capture.entity_with_access( access_token )["result"]
+      @user_entity ||= app.api.entity_with_access( access_token )["result"]
       return @user_entity
     rescue CaptureTools::Errors::AccessTokenExpiredError      
       # refresh the token
@@ -55,23 +51,10 @@ module SessionHelper
   end
 
   def signed_in?
-    capture_sessions.key?(params[:name])
+    capture_sessions.key?(app.name)
   end
 
   private
-
-  # a capture apid abstraction defined in capture_tools
-  def capture
-    @capture ||= CaptureTools::Api.new({
-      #:base_url => settings.fetch("capture_addr"), 
-      :base_url => "https://" + settings.fetch("captureui_addr"), # both should be the same in most cases.
-      :client_id => settings.fetch("client_id"),
-      :client_secret => settings.fetch("client_secret"),
-      :app_id => settings.fetch("app_id")
-    })
-  end
-
-
 
   def require_signin
     if !signed_in?
@@ -89,11 +72,11 @@ module SessionHelper
   end
 
   def capture_session
-    capture_sessions[params[:name]]
+    capture_sessions[app.name]
   end
 
   def refresh_token
-    capture_sessions[params[:name]] = capture.refresh_token({
+    capture_sessions[app.name] = app.api.refresh_token({
       :refresh_token => capture_session["refresh_token"]
     })
   end

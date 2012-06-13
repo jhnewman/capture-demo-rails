@@ -1,5 +1,16 @@
 require 'yaml'
 
+class Hash
+  def require_keys(*keys)
+    keys.each{|key| 
+      if !self.key?(key)
+        raise "field \'#{key}\' not found in configuration. Did you set in?"
+      end
+    }
+    return self
+  end
+end
+
 module Settings 
 
   public
@@ -8,8 +19,8 @@ module Settings
     settings["use_ssl"] ? "https" : "http"
   end 
 
-  def apps
-    @apps ||= config.keys 
+  def app_names
+    app_config.keys 
   end
 
   def app_configs 
@@ -17,14 +28,42 @@ module Settings
   end
 
   def settings
-    return @settings unless @settings.blank?
+    app.settings
+  end
 
-    begin 
-      @settings = verify(defaults.merge(app_configs.fetch( params[:name] )))
+  def app
+    return @app unless @app.blank?
+   
+    name = params[:app_name]
+    begin
+      yaml_settings = app_configs.fetch(name)
     rescue KeyError
-      raise "There is no configuration for and app named \'#{params[:name]}\'."
+      raise "There is no configuration for and app named \'#{name}}\'."
+    end 
+ 
+    yaml_settings.require_keys("capture_addr", "captureui_addr", "app_id", "client_id", "client_secret")
+
+    begin
+      capture = CaptureTools::Api.new({
+        :base_url => "https://" + yaml_settings.fetch("capture_addr"),
+        :client_id => yaml_settings.fetch("client_id"),
+        :client_secret => yaml_settings.fetch("client_secret"),
+        :app_id => yaml_settings.fetch("app_id")
+      })
+
+      capture_settings = capture.items.fetch("result")    
+    rescue KeyError, CaptureErrorRemote
+      raise "failed getting application settings from capture api"
     end
-    @settings
+
+    settings = capture_settings.merge(yaml_settings) 
+
+    @app = OpenStruct.new(settings)
+    @app.name = name
+    @app.api = capture 
+    @app.settings = settings
+
+    return @app
   end
 
   private
@@ -36,21 +75,4 @@ module Settings
     YAML.load_file(filename)
   end 
 
-  def defaults 
-    {
-      "my_addr" => "http://catfacts.dnsdynamic.com:8001",
-      "backplane_settings" => { },
-      "use_ssl" => true
-    }
-  end
- 
-  def verify(x)
-    required = ["my_addr", "capture_addr", "captureui_addr", "app_id", "client_id", "client_secret", "backplane_settings", "use_ssl"]
-    required.each{|field| 
-      if !x.key?(field)
-        raise "field \'#{field}\' not found in configuration. Did you set in?"
-      end
-    }
-    return x 
-  end 
 end
