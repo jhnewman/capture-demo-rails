@@ -1,7 +1,7 @@
 <script type="text/javascript">
   jQuery(document).ready(function($) {
 
-<% if !@debug %>
+<% if !@screen_debug %>
     $('.iframe').fancybox( {
       padding: 0,
       scrolling: 'no',
@@ -16,7 +16,7 @@
     $('#logout').click(sso_logout);
 <% end %>
 
-<% if @debug %>
+<% if @screen_debug %>
     $('select#screens').change(function() {
       var screen = $('option:selected', this).attr('value');
       location = '<%= "#{@my_addr}/#{ app.name }/" %>' + screen
@@ -60,7 +60,7 @@
   Hello, <%= @username %>! |
 <% end %>
 
-<% if @debug %>
+<% if @screen_debug %>
 
 <label for='apps'>App:<label>
 <select id='apps'>
@@ -99,7 +99,7 @@
     <%= link_to "Sign Out", "/#{app.name}/logout" %>
   <% end %>
 <% else %>
-  <% if @debug %>
+  <% if @screen_debug %>
     <%= link_to "Sign In", "/#{app.name}/signin" %>
   <% else %>
     <%= link_to "Sign In", @signin_uri, :class => "iframe signin_link" %>

@@ -26,7 +26,9 @@ class DemoController < ApplicationController
 
   layout "demo"
 
-  @@debug = true
+  @@screen_debug = true
+  @@use_sso = false
+  @@use_backplane = false
 
   def screen_name 
     @screen_name ||= params[:screen_name]
@@ -47,7 +49,7 @@ class DemoController < ApplicationController
   def nav
     @apps = app_configs.keys
     @signin_uri = screen_uri(api_args.select_keys("client_id", "redirect_uri", "response_type"), "signin")
-    @debug = @@debug
+    @screen_debug = @@screen_debug
     if signed_in?
       @username = user_entity.fetch("displayName")
     end
@@ -58,12 +60,12 @@ class DemoController < ApplicationController
     @xdcomm_uri = "#{my_addr}/#{app.name}/xdcomm"
     @logout_uri = "#{my_addr}/#{app.name}/logout?from_sso=1"
     @redirect_uri = api_args["redirect_uri"]
-    @use_sso = !app.sso_server.nil? 
+    @use_sso = !app.sso_server.nil? && @use_sso 
   end
 
   # initializes data used in _backplane.html.erb
   def backplane
-    @use_backplane = app.backplane_server && app.backplane_bus && app.backplane_version
+    @use_backplane = @@use_backplane && app.backplane_server && app.backplane_bus && app.backplane_version
     
     @serverBaseURL = "https://#{app.backplane_server}/#{app.backplane_version}/"
 
