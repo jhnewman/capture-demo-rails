@@ -1,6 +1,7 @@
 <script type="text/javascript">
   jQuery(document).ready(function($) {
 
+<% if !@debug %>
     $('.iframe').fancybox( {
       padding: 0,
       scrolling: 'no',
@@ -8,11 +9,14 @@
       autoDimensions: false,
       type: 'iframe'
     } );
+<% end %>
+
 
 <% if @use_sso %>
     $('#logout').click(sso_logout);
 <% end %>
 
+<% if @debug %>
     $('select#screens').change(function() {
       var screen = $('option:selected', this).attr('value');
       location = '<%= "#{@my_addr}/#{ app.name }/" %>' + screen
@@ -20,8 +24,9 @@
 
     $('select#apps').change(function() {
       var app = $('option:selected', this).attr('value');
-      location = '<%= "#{@my_addr}/" %>' + app + '/<%= @screen %>'
+      location = '<%= "#{@my_addr}/" %>' + app + '/<%= @screen_name %>'
     });
+<% end %>
 
   });
   
@@ -89,7 +94,7 @@
 
 <% if signed_in? %>
   <% if @use_sso %>
-    <%= link_to "Sign Out", "#" %> 
+    <%= link_to "Sign Out", "#", :id => "logout" %> 
   <% else %>
     <%= link_to "Sign Out", "/#{app.name}/logout" %>
   <% end %>

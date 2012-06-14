@@ -1,4 +1,3 @@
-
 require 'capture_app'
 require 'capture_tools'
 require 'yaml'
@@ -32,7 +31,8 @@ CaptureApp.all_apps.map {|app|
       "app_id" => app.app_id,
       "captureui_addr" => capture_ui,
       "capture_addr" => capture,
-      "screens" => name2mod[app.name.normalize].screens.keys.map{|x|x.to_s}
+      "screens" => name2mod[app.name.normalize].screens.keys.map{|x|x.to_s},
+      "sso_server" => app.sso_server
     }
   end
 }

@@ -21,8 +21,6 @@ class Proc
 end
 
 class DemoController < ApplicationController
-
-
   include Settings  
   include SessionHelper
 
@@ -30,18 +28,17 @@ class DemoController < ApplicationController
 
   @@debug = true
 
-  before_filter :screen_name
-
   def screen_name 
     @screen_name ||= params[:screen_name]
   end
 
+  before_filter :screen_name
   before_filter :my_addr
 
 #  before_filter :require_login, :only => [:profile, :edit_profile, :foo, :bar, :change_password]
 
-#  before_filter :backplane
-#  before_filter :sso
+  before_filter :backplane
+  before_filter :sso
 
   before_filter :nav, :except => [:list_apps, :view_session, :view_settings, :view_user_entity]
 
@@ -58,9 +55,10 @@ class DemoController < ApplicationController
 
   # initializes data used in _sso.html.erb
   def sso
-    #@client_id = settings["client_id"]
-    #@sso_server = settings["sso_server"]
-    @use_sso = @sso_server != nil
+    @xdcomm_uri = "#{my_addr}/#{app.name}/xdcomm"
+    @logout_uri = "#{my_addr}/#{app.name}/logout?from_sso=1"
+    @redirect_uri = api_args["redirect_uri"]
+    @use_sso = !app.sso_server.nil? 
   end
 
   # initializes data used in _backplane.html.erb
@@ -162,8 +160,9 @@ class DemoController < ApplicationController
 
   # not capture screens, but used for this app.
 
-  def logout
+  def logout    
     sign_out
+#    render :text => "single sign off" and return unless params["from_sso"].nil?
     redirect_to "#{my_addr}/#{app.name}/home"
   end
 
@@ -173,7 +172,7 @@ class DemoController < ApplicationController
 
   # required as described in documentation
   def xdcomm
-    render :layout => false
+    render "xdcomm", :layout => false
   end
 
   # handles oauth callback stuff from signin
@@ -185,8 +184,8 @@ class DemoController < ApplicationController
     end
 
     from_sso = params.fetch("from_sso", "0") == "1" 
-    origin = params["origin"]
-    
+    origin = params["origin"] if params.key?("origin")
+
     redirect_uri_sso = URI(api_args["redirect_uri"])
     redirect_uri_sso.query = URI.encode_www_form(params.select{|k, v| ["from_sso", "origin"].include? k})
 
@@ -208,12 +207,15 @@ class DemoController < ApplicationController
     end 
   end 
   
-  # dispatcher is the action that get called for /:app/:screen routes.
+  # dispatcher is the action that get called for /:app_name/:screen_name routes.
   # Turns screen into an action, and calls it. If it can't find an action
   # it will remove suffixes until it can, or until it decides to call 
   # a generic handler.
+  #
+  # note that all actions will go through here, so rails will default to 
+  # rendering /demo/dispatcher, which doesn't exist and will make for bad times.
   # 
-  #im so meta
+  # im so meta
   def dispatcher
     screen = screen_name
     # continuosly remove tokens seperated by '_', starting from the end
@@ -226,11 +228,8 @@ class DemoController < ApplicationController
       tokens = screen.split("_")
       screen = tokens.take(tokens.length - 1).join("_")
     end while screen != ""
-    generic_screen
-  end
-
-  def generic_screen
-    #render :text => "unknown screen", :layout => true
+    # even if we don't have an action for this screen, attempt to embed it.
+    # if anything captureui will just 404 or complain.
     embed_screen
   end
 
@@ -244,10 +243,6 @@ class DemoController < ApplicationController
     embed_screen api_args.select_keys("id") 
   end
  
-#  def finish_third_party
-#    embed_screen api_args.select_keys("redirect_uri", "client_id", "token", "response_type")
-#  end
-
   def profile_change_password
     embed_screen api_args.select_keys("token")
   end
@@ -276,8 +271,6 @@ class DemoController < ApplicationController
   end
   def finish_third_party
     render :unviewable
-  end
-
- 
+  end 
 end
 

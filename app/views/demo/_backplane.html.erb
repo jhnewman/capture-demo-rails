@@ -18,6 +18,11 @@
           $(".signin_link").each(function() {
             this.href = this.href + "&bp_channel=" + encodeURIComponent(bp_channel);
           });
+          <% if @screen_name == "signin" %>
+          $(".capture_screen").each(function() {
+            this.src = this.src + "&bp_channel=" + encodeURIComponent(bp_channel);
+          });
+          <% end %>
         });
      
         id = Backplane.subscribe(function(backplaneMessage) {
