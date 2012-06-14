@@ -2,7 +2,7 @@
 Description
 ===========
 
-A port of the janrain capture demo site from php into a ruby on rails app.
+A port of the janrain capture demo(Capture.Demo) from php into a ruby on rails app(Capture.Demo-rails).
 
 The most recent version allows viewing all screens for multiple capture apps.
 
@@ -15,9 +15,16 @@ Installation and Setup
 
 * Clone.
 
-* Run the exporter.rb rails runner script to generate 'config.yml' and place in rails root directory.
+  git clone https://github.com/jhnewman/Capture.Demo-rails.git
+
+* Run the exporter.rb rails runner script on a CaptureUI server to generate 'config.yml' and place in the rails root directory. A hypothetical scenario, for example:
+
+  cd CaptureUI
+  rails runner ../Capture.Demo-rails/exporter.rb ../Capture.Demo-rails/config.yml
 
 * Start rails server.
+
+  rails server -p 8001
 
 Documentation
 =============
