@@ -1,6 +1,5 @@
-GIT
-  remote: git@github.com:janrain/capture_tools.git
-  revision: 63308b570f8bf5268e79b38afdd05a321760aec7
+PATH
+  remote: vendor/gems/capture_tools
   specs:
     capture_tools (0.0.1)
 

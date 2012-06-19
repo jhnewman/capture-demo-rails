@@ -22,7 +22,7 @@ end
 
 gem 'jquery-rails'
 
-gem 'capture_tools', :git => 'git@github.com:janrain/capture_tools.git'
+gem 'capture_tools', :path => 'vendor/gems/capture_tools'  #:git => 'git@github.com:janrain/janrain_capture_tools.git'
 
 # To use ActiveModel has_secure_password
 # gem 'bcrypt-ruby', '~> 3.0.0'
